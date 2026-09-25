@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rak.local · macOS 26 Tahoe · รายงานการแก้ GPU + USB</title>
+<style>
+  :root{
+    --bg:#fafafa; --ink:#111111; --ink-2:#3d3d3d; --muted:#5f5f5f; --muted-2:#8a8a8a;
+    --rule:rgba(0,0,0,.12); --rule-strong:rgba(0,0,0,.28);
+    --accent:#1f4e79;
+    --ok:#1a7f37; --fail:#b42318; --warn:#9a5b06;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"SF Pro Display","Helvetica Neue",Helvetica,"Sukhumvit Set",Thonburi,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.6;
+    font-weight:400;letter-spacing:0;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 32px 96px}
+  .measure{max-width:68ch}
+
+  /* ---------- masthead ---------- */
+  header.mast{border-bottom:1px solid var(--rule-strong);padding:56px 0 28px;margin-bottom:40px}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+  h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.022em;font-weight:600;margin:0 0 14px}
+  .lede{font-size:19px;line-height:1.5;color:var(--ink-2);max-width:66ch;margin:0 0 26px}
+  .metastrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border-top:1px solid var(--rule)}
+  .metastrip div{border-right:1px solid var(--rule);padding:12px 16px 12px 0}
+  .metastrip div:last-child{border-right:0}
+  .metastrip dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:0 0 4px}
+  .metastrip dd{margin:0;font-size:14px;font-variant-numeric:tabular-nums}
+
+  /* ---------- sections ---------- */
+  section{margin:0 0 56px}
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;
+     margin:0 0 6px;padding-top:18px;border-top:1px solid var(--rule-strong)}
+  h2 .num{color:var(--muted-2);margin-right:10px}
+  h3{font-size:20px;letter-spacing:-.01em;font-weight:600;margin:30px 0 10px}
+  h4{font-size:15px;font-weight:600;margin:22px 0 6px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:20px}
+  li{margin:0 0 6px}
+  strong{font-weight:550}
+  code{font-family:var(--mono);font-size:.88em;background:rgba(0,0,0,.045);padding:1px 5px;border-radius:3px}
+  pre{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:#fff;border:1px solid var(--rule);
+      padding:14px 16px;overflow-x:auto;margin:0 0 16px}
+  pre .c{color:var(--muted-2)}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(31,78,121,.35)}
+
+  /* ---------- tables ---------- */
+  table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:14.5px}
+  caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--muted);padding:0 0 8px}
+  th,td{text-align:left;padding:9px 14px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  thead th{border-bottom:1px solid var(--rule-strong);font-weight:600;font-size:12px;letter-spacing:.04em;
+           text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  td.num,th.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bleed{margin-right:calc(50% - 50vw);max-width:100vw;padding-right:32px}
+
+  /* ---------- status marks ---------- */
+  .s{font-family:var(--mono);font-size:12px;letter-spacing:.02em;white-space:nowrap}
+  .s.ok{color:var(--ok)} .s.no{color:var(--fail)} .s.warn{color:var(--warn)} .s.na{color:var(--muted-2)}
+
+  /* ---------- callout ---------- */
+  .note{border:1px solid var(--rule-strong);border-left:3px solid var(--accent);padding:14px 18px;margin:0 0 18px;background:#fff}
+  .note .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+  .note.danger{border-left-color:var(--fail)} .note.danger .lbl{color:var(--fail)}
+
+  /* ---------- verdict row ---------- */
+  .verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 20px}
+  .verdict>div{background:var(--bg);padding:16px 18px}
+  .verdict .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:6px}
+  .verdict .v{font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .verdict .d{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.45}
+
+  footer.colophon{margin-top:64px;border-top:1px solid var(--rule-strong);padding-top:18px;
+    font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.7}
+  @media print{body{background:#fff}.bleed{margin:0;padding:0}header.mast{padding-top:0}a{color:var(--ink)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">รายงานทางเทคนิค · AutoCoder · 25 กันยายน 2026</p>
+  <h1>Mac Pro 2013 (rak.local) บน macOS 26 Tahoe<br>การ์ดจอ AMD FirePro D500 ×2 และ USB Fresco Logic FL1100</h1>
+  <p class="lede">บันทึกผลการสืบสวนและทดลองจริงบนเครื่อง เพื่อส่งต่อให้ผู้พัฒนา patch:
+     สาเหตุที่ระบบไม่มีการเร่งความเร็วกราฟิกและพอร์ต USB ทั้งหมดไม่ทำงาน, พฤติกรรมของเครื่องมือ patcher ที่มีอยู่ในปัจจุบัน,
+     และสิ่งที่ต้องแก้ในระดับใดจึงจะได้ผล</p>
+  <dl class="metastrip">
+    <div><dt>เครื่อง</dt><dd>MacPro6,1 (Mac Pro Late 2013)</dd></div>
+    <div><dt>ระบบ</dt><dd>macOS 26.7 (25G229)</dd></div>
+    <div><dt>CPU / RAM</dt><dd>Xeon E5 6-core · 16 GB</dd></div>
+    <div><dt>GPU</dt><dd>FirePro D500 ×2 (0x679e)</dd></div>
+    <div><dt>Boot</dt><dd>OpenCore REL-106</dd></div>
+    <div><dt>สถานะ</dt><dd>Headless (SSH) · WiFi/Audio ใช้ได้</dd></div>
+  </dl>
+</header>
+
+<section>
+  <h2><span class="num">01</span>สรุปผล</h2>
+  <div class="verdict">
+    <div>
+      <div class="t">USB 3.0 (FL1100)</div>
+      <div class="v s no">ยังใช้ไม่ได้</div>
+      <div class="d">คอนโทรลเลอร์ถูกจับและไดรเวอร์โหลด แต่ไม่สร้างพอร์ต/ไม่ enumerate อุปกรณ์ — ไม่มี patch สำหรับ Tahoe</div>
+    </div>
+    <div>
+      <div class="t">การ์ดจอ (GCN 1.0)</div>
+      <div class="v s no">ยังไม่มีการเร่งความเร็ว</div>
+      <div class="d">Apple ถอดโค้ด Tahiti ออกจากไดรเวอร์ — WindowServer ล้มเป็นช่วง ๆ → ไม่มีภาพให้สตรีม</div>
+    </div>
+    <div>
+      <div class="t">WiFi + Audio</div>
+      <div class="v s ok">patch สำเร็จ</div>
+      <div class="d">OCLP-Mod 3.1.9 ติดตั้งให้แล้ว · BCM Wi-Fi + AppleHDA กลับมาใช้งานได้</div>
+    </div>
+  </div>
+  <p class="measure"><strong>ข้อสรุปหลัก:</strong> ทั้งสองปัญหาไม่ใช่เรื่องการตั้งค่า (SIP / SecureBootModel / boot-args ถูกต้องและครบแล้ว)
+     แต่เป็นเรื่อง <strong>ไดรเวอร์ของฮาร์ดแวร์สองตัวนี้ไม่มีอยู่ใน macOS 26 อีกต่อไป</strong> และเครื่องมือ patch ทั้ง 4 ตัวที่เป็นที่รู้จัก
+     ไม่มีชุด patch สำหรับสองส่วนนี้บน Tahoe — บางตัวปิดโดยเจตนา บางตัวยังไม่รองรับระบบ</p>
+</section>
+
+<section>
+  <h2><span class="num">02</span>สาเหตุราก (หลักฐานจากการทดลองในเครื่อง)</h2>
+
+  <h3>2.1 การ์ดจอ — Apple ถอดโค้ด GCN 1.0 ออกจากไดรเวอร์</h3>
+  <p class="measure">ไดรเวอร์ที่ควรขับ D500 คือ <code>AMDRadeonX4000.kext</code> ตอนนี้มันมีอยู่บนดิสก์ แต่รายการ PCI ที่รองรับถูกเปลี่ยนไปเป็นรุ่น Polaris (GCN 4) ทั้งหมด:</p>
+  <table class="bleed">
+    <caption>การจับคู่อุปกรณ์ของไดรเวอร์</caption>
+    <thead><tr><th>รายการ</th><th>ค่า</th><th>ความหมาย</th></tr></thead>
+    <tbody>
+      <tr><td>PCI ID ของการ์ด</td><td class="num">0x679e (AMD 0x1002) · Tahiti / GCN 1.0</td><td class="s na">ฮาร์ดแวร์ปกติ</td></tr>
+      <tr><td>IOPCIMatch ใน Tahoe</td><td class="num">0x67E0 … 0x67FF (Polaris)</td><td class="s no">ไม่มีรุ่นนี้</td></tr>
+      <tr><td>นับคำว่า <code>679e</code> ใน kext</td><td class="num">0 ครั้ง</td><td class="s no">ไม่จับคู่</td></tr>
+      <tr><td>ไดรเวอร์ที่โหลดจริง</td><td class="num">com.apple.kext.AMDSupport (7.0.1) เท่านั้น</td><td class="s warn">มีแต่ framebuffer</td></tr>
+      <tr><td>ผลต่อ compositor</td><td class="num">WindowServer · SIGABRT · 33 crash reports</td><td class="s no">ไม่มีภาพ</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.2 USB — ไดรเวอร์โหลดได้ แต่พอร์ตไม่ถูกสร้าง</h3>
+  <p class="measure">กรณี USB ต่างจากการ์ดจอ: <strong>ไดรเวอร์มีอยู่และจับการ์ดสำเร็จ</strong> แต่ไม่มีการนำพอร์ตขึ้นมาใช้งาน:</p>
+  <table class="bleed">
+    <caption>สถานะ USB บนบัส PCI</caption>
+    <thead><tr><th>รายการ</th><th>ค่า</th><th>ความหมาย</th></tr></thead>
+    <tbody>
+      <tr><td>คอนโทรลเลอร์ XHCI</td><td class="num">pci1b73,1100 · AppleUSBXHCIFL1100 · registered/matched/active</td><td class="s ok">จับคู่สำเร็จ</td></tr>
+      <tr><td>แผนที่พอร์ตที่ไดรเวอร์ได้รับ</td><td class="num">port-count = 8 · ports = HS01–HS04, SSP1–SSP4</td><td class="s na">มีข้อมูล</td></tr>
+      <tr><td>เวลาที่ใช้ init</td><td class="num">busy 0 (1 ms)</td><td class="s no">แทบไม่ทำงาน</td></tr>
+      <tr><td>อุปกรณ์ที่ enumerate</td><td class="num">IOUSBHostDevice = 0</td><td class="s no">ไม่มีเลย</td></tr>
+      <tr><td>Bluetooth ภายใน (วิ่งบนบัส USB)</td><td class="num">State: Off · Address: NULL</td><td class="s no">ตามลงไปด้วย</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><span class="lbl">เทียบกับเครื่องที่ทำงานได้</span>
+    Mac mini (Macmini7,1, macOS 26.5) ใช้คอนโทรลเลอร์ USB ของ Intel → ไดรเวอร์ <code>AppleUSBXHCILPT</code> → พอร์ตขึ้นปกติ · อุปกรณ์ 10 ชิ้น ·
+    ค่า boot-args / SIP / kext ชุดเดียวกันทุกอย่าง ⇒ <strong>ความต่างอยู่ที่ตัวคอนโทรลเลอร์ ไม่ใช่การตั้งค่า</strong></div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>เครื่องมือที่ทดลองและผลลัพธ์</h2>
+  <table class="bleed">
+    <caption>สรุปการทดลองจริง (เรียงตามลำดับที่ทำ)</caption>
+    <thead><tr><th>เครื่องมือ / วิธี</th><th>ผล</th><th>หลักฐาน</th></tr></thead>
+    <tbody>
+      <tr><td>OCLP 2.5.1 <code>--patch_sys_vol</code></td><td class="s no">ปฏิเสธ</td>
+          <td><code>Cannot continue with patching! → Breakdown: Unsupported Host OS</code></td></tr>
+      <tr><td>ฉีด <code>XHCI-unsupported.kext</code> › แบบใช้ bundle id ของ Apple</td><td class="s no">ไม่มีผล</td>
+          <td>XHC1 ยัง bind เป็น <code>AppleUSBXHCIFL1100</code> · IOUSBHostDevice = 0</td></tr>
+      <tr><td>ฉีด <code>XHCI-unsupported.kext</code> › แบบถูกต้อง (id ของเราเอง + personality อ้าง AppleUSBXHCIPCI + score 100000)</td>
+          <td class="s no">ไม่มีผล</td><td>ผลเหมือนเดิมทุกรายการ</td></tr>
+      <tr><td>สลับ/ปิด <code>USB-Map.kext</code> ของเดิม</td><td class="s no">ไม่เกี่ยวข้อง</td><td>ปิดแล้วรีบูต — สถานะไม่เปลี่ยน</td></tr>
+      <tr><td><strong>OCLP-R 3.1.5</strong></td><td class="s no">แครชก่อน patch</td>
+          <td>source <code>constants.py:19 kdk_api_link = ""</code> → <code>MissingSchema: Invalid URL ''</code>;<br>ตรวจแล้ว <strong>3.1.8 และ main ก็ค่าว่างเหมือนกัน</strong></td></tr>
+      <tr><td><strong>OCLP-Mod 3.1.9</strong> (laobamac)</td><td class="s ok">patch สำเร็จ</td>
+          <td>ติดตั้งให้เฉพาะ <code>BCM 无线网卡</code> + <code>音频补丁</code> · KDK 26.7 merge สำเร็จ · rebuild kernel collections สำเร็จ</td></tr>
+      <tr><td>OCLP-Plus 3.2.2 (YBronst)</td><td class="s na">ไม่เกี่ยว</td>
+          <td>โปรเจกต์ archive 28 มิ.ย. 2026 · รองรับเฉพาะรุ่น native Tahoe (iMac20,x · MBP16,x · MacPro7,1) · ระบุเองว่าไม่มี graphics patch สำหรับรุ่น unsupported</td></tr>
+      <tr><td>บังคับ legacy-GCN patch (แนวทางที่ผู้ใช้ขอ)</td><td class="s warn">หยุดไว้ตามคำสั่ง</td>
+          <td>ซอร์ส OCLP-Mod ระบุ <code>if xnu_major == os_data.tahoe.value: return False</code> — ปิดโดยเจตนา</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2><span class="num">04</span>สิ่งที่ผู้พัฒนา patch ต้องรู้</h2>
+  <p class="measure">หากจะให้สองส่วนนี้ทำงานบน macOS 26 ต้องแก้ในระดับที่ลึกกว่า kext injection ปกติ:</p>
+  <table class="bleed">
+    <thead><tr><th style="width:22%">ส่วน</th><th>สิ่งที่ต้องทำ</th><th style="width:26%">เหตุผล</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>กราฟิก GCN 1.0</strong></td>
+        <td>ติดตั้งไดรเวอร์ AMD ยุคที่ยังรองรับ Tahiti (Monterey–Ventura) <em>พร้อม</em> patch framework ที่เกี่ยวข้องลง root volume
+            — เทียบเท่า OCLP “Legacy Metal” patch แต่ต้อง port ให้เข้ากับ Tahoe</td>
+        <td>บน Tahoe kext ตัวใหม่ไม่มีโค้ด Tahiti และเฟรมเวิร์กเปลี่ยน ABI ⇒ ฉีด kext เดี่ยวจะ panic</td>
+      </tr>
+      <tr>
+        <td><strong>USB FL1100</strong></td>
+        <td>ต้องหาสาเหตุที่ไดรเวอร์ที่จับคู่แล้วไม่สร้างพอร์ต (init ออกที่ ~1 ms) แล้ว patch/แทนที่ personality หรือแก้การ merge
+            port map ในระดับที่ไดรเวอร์ยอมใช้</td>
+        <td>ไดรเวอร์มี + แผนที่พอร์ตมี ⇒ ตัวขวางอยู่ที่การ init ไม่ใช่ kext หาย</td>
+      </tr>
+      <tr>
+        <td><strong>KDK</strong></td>
+        <td>ใช้ <code>KDK_26.7_25G229.kdk</code> (ติดตั้งอยู่แล้วในเครื่อง) เป็นฐาน link ไดรเวอร์</td>
+        <td>OCLP-Mod merge KDK กับ root volume สำเร็จ ⇒ เส้นทางนี้ใช้งานได้จริง</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note danger"><span class="lbl">ข้อควรระวังสำหรับผู้ทดลอง</span>
+    การทดลองกับ kext กราฟิก/USB ในระดับ kernel บนเครื่องนี้ <strong>ไม่มีการกู้ระยะไกล</strong> (ไม่มีคีย์บอร์ด · ไม่มีจอใช้ได้ · ถ้าไม่บูตจะ SSH ไม่ขึ้น)
+    แนวทางกู้เดียวคือ <strong>Thunderbolt Target Disk Mode</strong> ต่อกับอีกเครื่อง (เช่น Mac mini) — ควรเตรียมไว้ก่อนทุกครั้งที่จะทดลอง</div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>สถานะเครื่องปัจจุบัน + การย้อนกลับ</h2>
+  <table class="bleed">
+    <thead><tr><th>รายการ</th><th>ค่า</th><th>สถานะ</th></tr></thead>
+    <tbody>
+      <tr><td>boot-args</td><td class="num">keepsyms=1 debug=0x100 -lilubetaall ipc_control_port_options=0 -nokcmismatchpanic</td><td class="s ok">ปกติ</td></tr>
+      <tr><td>csr-active-config</td><td class="num">%03%08%00%00 (= 0x0803)</td><td class="s ok">ตามที่ OCLP ต้องการ</td></tr>
+      <tr><td>SecureBootModel</td><td class="num">Disabled</td><td class="s ok">ตามที่ OCLP ต้องการ</td></tr>
+      <tr><td>EFI config.plist (md5)</td><td class="num">c699d2b270d7762918ff80b80f5ab395</td><td class="s ok">ไม่ถูกแก้จากต้นฉบับ</td></tr>
+      <tr><td>Patch ที่ติดตั้งบน root volume</td><td class="num">BCM Wi-Fi + AppleHDA (จาก OCLP-Mod 3.1.9)</td><td class="s ok">ทำงาน</td></tr>
+      <tr><td>แอพที่ติดตั้ง</td><td class="num">/Applications/OCLP-Mod.app · /Applications/OpenCore-Patcher.app (2.5.1)</td><td class="s ok">—</td></tr>
+      <tr><td>OCLP-R</td><td class="num">ลบออกทั้งหมด (แอพ · payloads · privileged helper · LaunchAgent · receipts)</td><td class="s ok">สะอาด</td></tr>
+      <tr><td>LaunchAgents</td><td class="num">com.dortania…auto-patch · com.laobamac.oclp-mod.auto-patch</td><td class="s na">ตามปกติของ patcher</td></tr>
+    </tbody>
+  </table>
+  <h4>วิธีย้อนกลับ</h4>
+  <pre><span class="c"># ยกเลิก patch ทั้งหมดของ OCLP-Mod (คืน root volume สภาพเดิม)</span>
+sudo "/Library/Application Support/laobamac/OCLP-Mod.app/Contents/MacOS/OCLP-Mod" --unpatch_sys_vol
+
+<span class="c"># ย้อนค่า EFI (ถ้าจำเป็น) — สำรองทั้งหมดอยู่บน ESP</span>
+ls /Volumes/EFI/EFI/OC/config.plist.bak-*</pre>
+</section>
+
+<section>
+  <h2><span class="num">06</span>สิ่งที่ทำได้ตอนนี้</h2>
+  <ul class="measure">
+    <li><strong>ใช้เป็น headless ผ่าน SSH</strong> — ใช้งานได้เต็มรูปแบบ (งานไฟล์ · คำสั่ง · server · backup)</li>
+    <li><strong>WiFi + Audio</strong> — patch ติดตั้งแล้ว; Wi-Fi ยังสลับเป็น Off อยู่ เปิดได้จาก System Settings หรือ CLI</li>
+    <li><strong>GUI บนเครื่องนี้</strong> — ไม่สามารถใช้ได้จนกว่าจะมีไดรเวอร์ GCN 1.0 สำหรับ Tahoe (WindowServer ล้มเป็นช่วง ๆ; จอผ่าน Screen Sharing จะดำ)</li>
+    <li><strong>ทางเลือกสำหรับงานที่ต้องมีหน้าจอ</strong> — ใช้ Mac mini (Tahoe · GPU/USB ทำงาน) หรือ kaiwa.local (macOS 15 · HD 630 ใช้งานได้)</li>
+  </ul>
+</section>
+
+<footer class="colophon">
+  จัดทำโดย AutoClaw · 25 กันยายน 2026 · ข้อมูลทั้งหมดในรายงานนี้เก็บจากการตรวจสอบเครื่องจริงและการทดลองที่บันทึกไว้
+  (ผลการรัน patcher · สถานะ IORegistry · รายการ PCI ในไดรเวอร์ · crash reports · ชุดคำสั่งที่ใช้) ไม่มีข้อมูลใดถูกคาดเดาเพิ่มเติม<br>
+  เครื่อง: rak.local (MacPro6,1) · macOS 26.7 (25G229) · ตรวจล่าสุด 25/09/2026 16:02
+</footer>
+
+</div>
+</body>
+</html>
