@@ -1,0 +1,9 @@
+Homebrew version : 7.0.6
+Git commit       : 570982948a8a194f0f42f43f4a5bce2d1c9f64cb
+Branch           : stable
+Architecture     : x86_64 (Intel)
+Prefix           : /usr/local
+Packed from      : Rak.local (macOS) /usr/local/Homebrew
+Packed on        : 2026-09-25 12:05:52 +07
+Kit size         :  28M
+Excluded         : Homebrew/.git (intentional: prevents brew from self-updating to an Intel-unsupported version)
