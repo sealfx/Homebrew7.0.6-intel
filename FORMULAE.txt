@@ -1,0 +1,43 @@
+Homebrew 7.0.6 (Intel) — bundled Cellar formulae
+
+autoconf                 2.73
+automake                 1.19
+bat                      0.26.1
+brotli                   1.2.0
+ca-certificates          2026-08-13
+cmake                    4.4.3  (ไม่รวม — ติดตั้งแยก)
+curl                     8.22.0
+fd                       10.5.0
+gdbm                     1.26
+gmp                      6.3.0
+go                       1.27.1  (ไม่รวม — ติดตั้งแยก)
+htop                     3.5.3
+jq                       1.8.2
+libgit2                  1.9.7
+libnghttp2               1.70.0
+libnghttp3               1.18.0
+libngtcp2                1.25.0
+libpsl                   0.23.3
+libssh2                  1.11.1_4
+libtool                  2.6.2
+llhttp                   9.4.3
+lz4                      1.10.0
+m4                       1.4.21
+mpdecimal                4.0.1
+ncdu                     2.9.2
+ncurses                  6.6
+oniguruma                6.9.10
+openssl@3                3.6.4
+pcre2                    10.48
+pkgconf                  3.0.7
+python-gdbm@3.12         3.12.14
+python@3.12              3.12.14  (ไม่รวม — ติดตั้งแยก)
+python@3.14              3.14.7  (ไม่รวม — ติดตั้งแยก)
+readline                 8.3.3
+ripgrep                  15.2.0
+simdjson                 4.6.11
+sqlite                   3.53.4
+syncthing                2.1.5
+tree                     2.3.2
+xz                       5.8.3
+zstd                     1.5.7_1
