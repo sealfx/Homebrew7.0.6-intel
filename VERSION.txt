@@ -1,0 +1,9 @@
+Kit              : Homebrew 7.0.6 (Intel) portable + Cellar basics
+Homebrew version : 7.0.6
+Git commit       : 570982948a8a194f0f42f43f4a5bce2d1c9f64cb
+Architecture     : x86_64 (Intel)
+Prefix           : /usr/local
+Bundled formulae : 37
+Packed from      : Rak.local /usr/local
+Packed on        : 2026-09-25 13:03:08 +07
+Sizes            : brew  28M | cellar  51M
